@@ -23,8 +23,8 @@ public struct XcodeReporter: Reporter {
         return [
             "\(violation.location): ",
             "\(violation.severity.rawValue): ",
-            "\(violation.ruleName) Violation: ",
-            violation.reason,
+            "好きな言葉は、「\(violation.ruleName)」でしょうか。: ",
+            /*violation.reason,*/
             " (\(violation.ruleIdentifier))"
         ].joined()
     }
