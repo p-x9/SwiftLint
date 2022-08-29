@@ -19,7 +19,8 @@ public struct IndentationWidthRule: ConfigurationProviderRule, OptInRule {
     public var configuration = IndentationWidthConfiguration(
         severity: .warning,
         indentationWidth: 4,
-        includeComments: true
+        includeComments: true,
+        includeCompilerDirectives: true
     )
     public static let description = RuleDescription(
         identifier: "indentation_width",
@@ -31,15 +32,15 @@ public struct IndentationWidthRule: ConfigurationProviderRule, OptInRule {
             Example("firstLine\nsecondLine"),
             Example("firstLine\n    secondLine"),
             Example("firstLine\n\tsecondLine\n\t\tthirdLine\n\n\t\tfourthLine"),
-            Example("firstLine\n\tsecondLine\n\t\tthirdLine\n//test\n\t\tfourthLine"),
+            Example("firstLine\n\tsecondLine\n\t\tthirdLine\n\t//test\n\t\tfourthLine"),
             Example("firstLine\n    secondLine\n        thirdLine\nfourthLine")
         ],
         triggeringExamples: [
-            Example("    firstLine"),
+            Example("↓    firstLine", testMultiByteOffsets: false, testDisableCommand: false),
             Example("firstLine\n        secondLine"),
-            Example("firstLine\n\tsecondLine\n\n\t\t\tfourthLine"),
-            Example("firstLine\n    secondLine\n        thirdLine\n fourthLine")
-        ]
+            Example("firstLine\n\tsecondLine\n\n↓\t\t\tfourthLine"),
+            Example("firstLine\n    secondLine\n        thirdLine\n↓ fourthLine")
+        ].skipWrappingInCommentTests()
     )
 
     // MARK: - Initializers
@@ -51,16 +52,13 @@ public struct IndentationWidthRule: ConfigurationProviderRule, OptInRule {
         var previousLineIndentations: [Indentation] = []
 
         for line in file.lines {
+            if ignoreCompilerDirective(line: line, in: file) { continue }
+
             // Skip line if it's a whitespace-only line
             let indentationCharacterCount = line.content.countOfLeadingCharacters(in: CharacterSet(charactersIn: " \t"))
             if line.content.count == indentationCharacterCount { continue }
 
-            if !configuration.includeComments {
-                // Skip line if it's part of a comment
-                let syntaxKindsInLine = Set(file.syntaxMap.tokens(inByteRange: line.byteRange).kinds)
-                if syntaxKindsInLine.isNotEmpty &&
-                    SyntaxKind.commentKinds.isSuperset(of: syntaxKindsInLine) { continue }
-            }
+            if ignoreComment(line: line, in: file) { continue }
 
             // Get space and tab count in prefix
             let prefix = String(line.content.prefix(indentationCharacterCount))
@@ -73,7 +71,7 @@ public struct IndentationWidthRule: ConfigurationProviderRule, OptInRule {
                 // Catch mixed indentation
                 violations.append(
                     StyleViolation(
-                        ruleDescription: IndentationWidthRule.description,
+                        ruleDescription: Self.description,
                         severity: configuration.severityConfiguration.severity,
                         location: Location(file: file, characterOffset: line.range.location),
                         reason: "Code should be indented with tabs or " +
@@ -97,7 +95,7 @@ public struct IndentationWidthRule: ConfigurationProviderRule, OptInRule {
                     // There's an indentation although this is the first line!
                     violations.append(
                         StyleViolation(
-                            ruleDescription: IndentationWidthRule.description,
+                            ruleDescription: Self.description,
                             severity: configuration.severityConfiguration.severity,
                             location: Location(file: file, characterOffset: line.range.location),
                             reason: "The first line shall not be indented."
@@ -122,7 +120,7 @@ public struct IndentationWidthRule: ConfigurationProviderRule, OptInRule {
                 let indentWidth = configuration.indentationWidth
                 violations.append(
                     StyleViolation(
-                        ruleDescription: IndentationWidthRule.description,
+                        ruleDescription: Self.description,
                         severity: configuration.severityConfiguration.severity,
                         location: Location(file: file, characterOffset: line.range.location),
                         reason: isIndentation ?
@@ -146,6 +144,27 @@ public struct IndentationWidthRule: ConfigurationProviderRule, OptInRule {
         }
 
         return violations
+    }
+
+    private func ignoreCompilerDirective(line: Line, in file: SwiftLintFile) -> Bool {
+        if configuration.includeCompilerDirectives {
+            return false
+        }
+        if file.syntaxMap.tokens(inByteRange: line.byteRange).kinds.first == .buildconfigKeyword {
+            return true
+        }
+        return false
+    }
+
+    private func ignoreComment(line: Line, in file: SwiftLintFile) -> Bool {
+        if configuration.includeComments {
+            return false
+        }
+        let syntaxKindsInLine = Set(file.syntaxMap.tokens(inByteRange: line.byteRange).kinds)
+        if syntaxKindsInLine.isNotEmpty, SyntaxKind.commentKinds.isSuperset(of: syntaxKindsInLine) {
+            return true
+        }
+        return false
     }
 
     /// Validates whether the indentation of a specific line is valid based on the indentation of the previous line.

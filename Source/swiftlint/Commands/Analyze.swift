@@ -1,7 +1,8 @@
 import ArgumentParser
+import SwiftLintFramework
 
 extension SwiftLint {
-    struct Analyze: ParsableCommand {
+    struct Analyze: AsyncParsableCommand {
         static let configuration = CommandConfiguration(abstract: "Run analysis rules")
 
         @OptionGroup
@@ -17,10 +18,13 @@ extension SwiftLint {
         @Argument(help: pathsArgumentDescription(for: .analyze))
         var paths = [String]()
 
-        mutating func run() throws {
+        func run() async throws {
             let allPaths: [String]
             if let path = path {
-                allPaths = [path]
+                queuedPrintError("""
+                    warning: The --path option is deprecated. Pass the path(s) to analyze last to the swiftlint command.
+                    """)
+                allPaths = [path] + paths
             } else if !paths.isEmpty {
                 allPaths = paths
             } else {
@@ -45,16 +49,11 @@ extension SwiftLint {
                 autocorrect: common.fix,
                 format: common.format,
                 compilerLogPath: compilerLogPath,
-                compileCommands: compileCommands
+                compileCommands: compileCommands,
+                inProcessSourcekit: common.inProcessSourcekit
             )
 
-            let result = LintOrAnalyzeCommand.run(options)
-            switch result {
-            case .success:
-                return
-            case .failure(let error):
-                throw error
-            }
+            try await LintOrAnalyzeCommand.run(options)
         }
     }
 }

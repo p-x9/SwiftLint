@@ -30,7 +30,7 @@ public struct FileHeaderRule: ConfigurationProviderRule, OptInRule {
             //  ↓Copyright © 2016 Realm. All rights reserved.
             //
             """)
-        ]
+        ].skipWrappingInCommentTests()
     )
 
     private static let reason = "Header comments should be consistent with project patterns."

@@ -37,6 +37,8 @@ struct LintOrAnalyzeArguments: ParsableArguments {
     var benchmark = false
     @Option(help: "The reporter used to log errors and warnings.")
     var reporter: String?
+    @Flag(help: "Use the in-process version of SourceKit.")
+    var inProcessSourcekit = false
 }
 
 // MARK: - Common Argument Help
@@ -45,7 +47,7 @@ struct LintOrAnalyzeArguments: ParsableArguments {
 // `LintOrAnalyzeArguments`.
 
 func pathOptionDescription(for mode: LintOrAnalyzeMode) -> ArgumentHelp {
-    "The path to the file or directory to \(mode.imperative)."
+    ArgumentHelp(visibility: .hidden)
 }
 
 func pathsArgumentDescription(for mode: LintOrAnalyzeMode) -> ArgumentHelp {

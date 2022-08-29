@@ -2,12 +2,6 @@ import SwiftLintFramework
 import XCTest
 
 class DeploymentTargetRuleTests: XCTestCase {
-    func testRule() {
-        verifyRule(DeploymentTargetRule.description)
-    }
-
-    // MARK: - Reasons
-
     func testMacOSAttributeReason() {
         let example = Example("@available(macOS 10.11, *)\nclass A {}")
         let violations = self.violations(example, config: ["macOS_deployment_target": "10.14.0"])
@@ -24,6 +18,18 @@ class DeploymentTargetRuleTests: XCTestCase {
 
         let expectedMessage = "Availability condition is using a version (4) that is satisfied by " +
                               "the deployment target (5.0.1) for platform watchOS."
+        XCTAssertEqual(violations.count, 1)
+        XCTAssertEqual(violations.first?.reason, expectedMessage)
+    }
+
+    func testiOSNegativeAttributeReason() throws {
+        try XCTSkipUnless(SwiftVersion.current >= .fiveDotSix)
+
+        let example = Example("if #unavailable(iOS 14) { legacyImplementation() }")
+        let violations = self.violations(example, config: ["iOS_deployment_target": "15.0"])
+
+        let expectedMessage = "Availability negative condition is using a version (14) that is satisfied by " +
+                              "the deployment target (15.0) for platform iOS."
         XCTAssertEqual(violations.count, 1)
         XCTAssertEqual(violations.first?.reason, expectedMessage)
     }

@@ -9,9 +9,9 @@ extension SwiftLint {
         @Option(help: "The directory where the documentation should be saved")
         var path = "rule_docs"
 
-        mutating func run() throws {
+        func run() throws {
             try RuleListDocumentation(primaryRuleList)
-                .write(to: URL(fileURLWithPath: path))
+                .write(to: URL(fileURLWithPath: path, isDirectory: true))
         }
     }
 }

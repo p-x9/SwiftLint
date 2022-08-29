@@ -29,7 +29,7 @@ private let legacyObjcTypes = [
     "NSUUID"
 ]
 
-public struct LegacyObjcTypeRule: OptInRule, ConfigurationProviderRule, AutomaticTestableRule {
+public struct LegacyObjcTypeRule: OptInRule, ConfigurationProviderRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -41,7 +41,9 @@ public struct LegacyObjcTypeRule: OptInRule, ConfigurationProviderRule, Automati
         kind: .idiomatic,
         nonTriggeringExamples: [
             Example("var array = Array<Int>()\n"),
-            Example("var calendar: Calendar? = nil")
+            Example("var calendar: Calendar? = nil"),
+            Example("var formatter: NSDataDetector"),
+            Example("var className: String = NSStringFromClass(MyClass.self)")
         ],
         triggeringExamples: [
             Example("var array = NSArray()"),
@@ -49,7 +51,7 @@ public struct LegacyObjcTypeRule: OptInRule, ConfigurationProviderRule, Automati
         ]
     )
 
-    private let pattern = legacyObjcTypes.joined(separator: "|")
+    private let pattern = "\\b(?:\(legacyObjcTypes.joined(separator: "|")))\\b"
 
     public func validate(file: SwiftLintFile) -> [StyleViolation] {
         return file.match(pattern: pattern)

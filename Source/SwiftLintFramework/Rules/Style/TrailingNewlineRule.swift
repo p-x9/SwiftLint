@@ -34,7 +34,7 @@ public struct TrailingNewlineRule: CorrectableRule, ConfigurationProviderRule, S
         triggeringExamples: [
             Example("let a = 0"),
             Example("let a = 0\n\n")
-        ],
+        ].skipWrappingInCommentTests().skipWrappingInStringTests(),
         corrections: [
             Example("let a = 0"): Example("let a = 0\n"),
             Example("let b = 0\n\n"): Example("let b = 0\n"),

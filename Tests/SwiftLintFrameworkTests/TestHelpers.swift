@@ -8,17 +8,25 @@ import XCTest
 private let violationMarker = "↓"
 
 private extension SwiftLintFile {
-    static func temporary(withContents contents: String) -> SwiftLintFile {
-        let url = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("swift")
-        _ = try? contents.data(using: .utf8)!.write(to: url)
-        return SwiftLintFile(path: url.path)!
+    static func testFile(withContents contents: String, persistToDisk: Bool = false) -> SwiftLintFile {
+        let file: SwiftLintFile
+        if persistToDisk {
+            let url = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("swift")
+            _ = try? contents.data(using: .utf8)!.write(to: url)
+            file = SwiftLintFile(path: url.path)!
+        } else {
+            file = SwiftLintFile(contents: contents)
+        }
+
+        file.markAsTestFile()
+        return file
     }
 
     func makeCompilerArguments() -> [String] {
         let sdk = sdkPath()
-        let frameworks = URL(fileURLWithPath: sdk)
+        let frameworks = URL(fileURLWithPath: sdk, isDirectory: true)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Library")
@@ -58,13 +66,13 @@ func violations(_ example: Example, config inputConfig: Configuration = Configur
     let config = inputConfig.applyingConfiguration(from: example)
     let stringStrippingMarkers = example.removingViolationMarkers()
     guard requiresFileOnDisk else {
-        let file = SwiftLintFile(contents: stringStrippingMarkers.code)
+        let file = SwiftLintFile.testFile(withContents: stringStrippingMarkers.code)
         let storage = RuleStorage()
         let linter = Linter(file: file, configuration: config).collect(into: storage)
         return linter.styleViolations(using: storage)
     }
 
-    let file = SwiftLintFile.temporary(withContents: stringStrippingMarkers.code)
+    let file = SwiftLintFile.testFile(withContents: stringStrippingMarkers.code, persistToDisk: true)
     let storage = RuleStorage()
     let collecter = Linter(file: file, configuration: config, compilerArguments: file.makeCompilerArguments())
     let linter = collecter.collect(into: storage)
@@ -74,13 +82,13 @@ func violations(_ example: Example, config inputConfig: Configuration = Configur
 extension Collection where Element == String {
     func violations(config: Configuration = Configuration.default, requiresFileOnDisk: Bool = false)
         -> [StyleViolation] {
-            let makeFile = requiresFileOnDisk ? SwiftLintFile.temporary : SwiftLintFile.init(contents:)
-            return map(makeFile).violations(config: config, requiresFileOnDisk: requiresFileOnDisk)
+            return map { SwiftLintFile.testFile(withContents: $0, persistToDisk: requiresFileOnDisk) }
+                .violations(config: config, requiresFileOnDisk: requiresFileOnDisk)
     }
 
     func corrections(config: Configuration = Configuration.default, requiresFileOnDisk: Bool = false) -> [Correction] {
-        let makeFile = requiresFileOnDisk ? SwiftLintFile.temporary : SwiftLintFile.init(contents:)
-        return map(makeFile).corrections(config: config, requiresFileOnDisk: requiresFileOnDisk)
+        return map { SwiftLintFile.testFile(withContents: $0, persistToDisk: requiresFileOnDisk) }
+            .corrections(config: config, requiresFileOnDisk: requiresFileOnDisk)
     }
 }
 
@@ -197,7 +205,7 @@ private extension Configuration {
     // swiftlint:disable:next function_body_length
     func assertCorrection(_ before: Example, expected: Example) {
         let (cleanedBefore, markerOffsets) = cleanedContentsAndMarkerOffsets(from: before.code)
-        let file = SwiftLintFile.temporary(withContents: cleanedBefore)
+        let file = SwiftLintFile.testFile(withContents: cleanedBefore, persistToDisk: true)
         // expectedLocations are needed to create before call `correct()`
         let expectedLocations = markerOffsets.map { Location(file: file, characterOffset: $0) }
         let includeCompilerArguments = self.rules.contains(where: { $0 is AnalyzerRule })
@@ -302,6 +310,8 @@ private func addShebang(_ example: Example) -> Example {
 }
 
 extension XCTestCase {
+    var isRunningWithBazel: Bool { FileManager.default.currentDirectoryPath.contains("bazel-out") }
+
     func verifyRule(_ ruleDescription: RuleDescription,
                     ruleConfiguration: Any? = nil,
                     commentDoesntViolate: Bool = true,
@@ -353,55 +363,70 @@ extension XCTestCase {
                     line: UInt = #line) {
         func verify(triggers: [Example], nonTriggers: [Example]) {
             verifyExamples(triggers: triggers, nonTriggers: nonTriggers, configuration: config,
-                           requiresFileOnDisk: ruleDescription.requiresFileOnDisk,
-                           file: file, line: line)
+                           requiresFileOnDisk: ruleDescription.requiresFileOnDisk, file: file, line: line)
         }
-
-        let triggers = ruleDescription.triggeringExamples
-        let nonTriggers = ruleDescription.nonTriggeringExamples
-        verify(triggers: triggers, nonTriggers: nonTriggers)
-
-        if testMultiByteOffsets {
-            verify(triggers: triggers.map(addEmoji), nonTriggers: nonTriggers.map(addEmoji))
-        }
-
-        if testShebang {
-            verify(triggers: triggers.map(addShebang), nonTriggers: nonTriggers.map(addShebang))
-        }
-
         func makeViolations(_ example: Example) -> [StyleViolation] {
             return violations(example, config: config, requiresFileOnDisk: ruleDescription.requiresFileOnDisk)
         }
 
+        let ruleDescription = ruleDescription.focused()
+        let (triggers, nonTriggers) = (ruleDescription.triggeringExamples, ruleDescription.nonTriggeringExamples)
+        verify(triggers: triggers, nonTriggers: nonTriggers)
+
+        if testMultiByteOffsets {
+            verify(triggers: triggers.filter(\.testMultiByteOffsets).map(addEmoji),
+                   nonTriggers: nonTriggers.filter(\.testMultiByteOffsets).map(addEmoji))
+        }
+
+        if testShebang {
+            verify(triggers: triggers.filter(\.testMultiByteOffsets).map(addShebang),
+                   nonTriggers: nonTriggers.filter(\.testMultiByteOffsets).map(addShebang))
+        }
+
         // Comment doesn't violate
         if !skipCommentTests {
+            let triggersToCheck = triggers.filter(\.testWrappingInComment)
             XCTAssertEqual(
-                triggers.flatMap({ makeViolations($0.with(code: "/*\n  " + $0.code + "\n */")) }).count,
-                commentDoesntViolate ? 0 : triggers.count,
-                "Violation(s) still triggered when code was nested inside comment",
+                triggersToCheck.flatMap { makeViolations($0.with(code: "/*\n  " + $0.code + "\n */")) }.count,
+                commentDoesntViolate ? 0 : triggersToCheck.count,
+                "Violation(s) still triggered when code was nested inside a comment",
                 file: (file), line: line
             )
         }
 
         // String doesn't violate
         if !skipStringTests {
+            let triggersToCheck = triggers.filter(\.testWrappingInString)
             XCTAssertEqual(
-                triggers.flatMap({ makeViolations($0.with(code: $0.code.toStringLiteral())) }).count,
-                stringDoesntViolate ? 0 : triggers.count,
+                triggersToCheck.flatMap({ makeViolations($0.with(code: $0.code.toStringLiteral())) }).count,
+                stringDoesntViolate ? 0 : triggersToCheck.count,
+                "Violation(s) still triggered when code was nested inside a string literal",
                 file: (file), line: line
             )
         }
 
-        // "disable" commands doesn't violate
+        // Disabled rule doesn't violate and disable command isn't superfluous
         for command in disableCommands {
-            XCTAssert(triggers.flatMap({ makeViolations($0.with(code: command + $0.code)) }).isEmpty,
+            let violationsPartionedByType = triggers
+                .filter { $0.testDisableCommand }
+                .map { $0.with(code: command + $0.code) }
+                .flatMap { makeViolations($0) }
+                .partitioned { $0.ruleIdentifier == SuperfluousDisableCommandRule.description.identifier }
+            XCTAssert(violationsPartionedByType.first.isEmpty,
+                      "Violation(s) still triggered although rule was disabled",
+                      file: (file), line: line)
+            XCTAssert(violationsPartionedByType.second.isEmpty,
+                      "Disable command was superfluous since no violations(s) triggered",
                       file: (file), line: line)
         }
     }
 
     func verifyCorrections(_ ruleDescription: RuleDescription, config: Configuration,
-                           disableCommands: [String], testMultiByteOffsets: Bool) {
-        parserDiagnosticsDisabledForTests = true
+                           disableCommands: [String], testMultiByteOffsets: Bool,
+                           parserDiagnosticsDisabledForTests: Bool = true) {
+        let ruleDescription = ruleDescription.focused()
+
+        SwiftLintFramework.parserDiagnosticsDisabledForTests = parserDiagnosticsDisabledForTests
 
         // corrections
         ruleDescription.corrections.forEach {
@@ -455,7 +480,7 @@ extension XCTestCase {
                 }
                 continue
             }
-            let file = SwiftLintFile(contents: cleanTrigger)
+            let file = SwiftLintFile.testFile(withContents: cleanTrigger)
             let expectedLocations = markerOffsets.map { Location(file: file, characterOffset: $0) }
 
             // Assert violations on unexpected location
@@ -507,5 +532,39 @@ extension XCTestCase {
         } catch {
             XCTFail("Wrong error caught", file: (file), line: line)
         }
+    }
+}
+
+private struct FocusedRuleDescription {
+    let nonTriggeringExamples: [Example]
+    let triggeringExamples: [Example]
+    let corrections: [Example: Example]
+
+    init(rule: RuleDescription) {
+        let nonTriggering = rule.nonTriggeringExamples.filter(\.isFocused)
+        let triggering = rule.triggeringExamples.filter(\.isFocused)
+        let corrections = rule.corrections.filter { _, value in value.isFocused }
+        let anyFocused = nonTriggering.isNotEmpty || triggering.isNotEmpty || corrections.isNotEmpty
+
+        if anyFocused {
+            self.nonTriggeringExamples = nonTriggering
+            self.triggeringExamples = triggering
+            self.corrections = corrections
+#if DISABLE_FOCUSED_EXAMPLES
+            (nonTriggering + triggering + corrections.values).forEach { example in
+                XCTFail("Focused examples are disabled", file: example.file, line: example.line)
+            }
+#endif
+        } else {
+            self.nonTriggeringExamples = rule.nonTriggeringExamples
+            self.triggeringExamples = rule.triggeringExamples
+            self.corrections = rule.corrections
+        }
+    }
+}
+
+private extension RuleDescription {
+    func focused() -> FocusedRuleDescription {
+        return FocusedRuleDescription(rule: self)
     }
 }

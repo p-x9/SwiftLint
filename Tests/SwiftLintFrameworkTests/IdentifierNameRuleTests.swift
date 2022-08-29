@@ -2,10 +2,6 @@ import SwiftLintFramework
 import XCTest
 
 class IdentifierNameRuleTests: XCTestCase {
-    func testIdentifierName() {
-        verifyRule(IdentifierNameRule.description)
-    }
-
     func testIdentifierNameWithAllowedSymbols() {
         let baseDescription = IdentifierNameRule.description
         let nonTriggeringExamples = baseDescription.nonTriggeringExamples + [

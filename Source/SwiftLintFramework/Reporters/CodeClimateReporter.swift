@@ -35,15 +35,21 @@ public struct CodeClimateReporter: Reporter {
                     "end": violation.location.line ?? NSNull() as Any
                 ]
             ],
-            "severity": violation.severity == .error ? "MAJOR": "MINOR",
+            "severity": violation.severity == .error ? "MAJOR" : "MINOR",
             "type": "issue"
         ]
     }
 
     internal static func generateFingerprint(_ violation: StyleViolation) -> String {
+        let fingerprintLocation = Location(
+            file: violation.location.relativeFile,
+            line: violation.location.line,
+            character: violation.location.character
+        )
+
         return [
-            "\(violation.location)",
+            "\(fingerprintLocation)",
             "\(violation.ruleIdentifier)"
-        ].joined().md5()
+        ].joined().sha256()
     }
 }

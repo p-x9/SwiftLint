@@ -2,10 +2,6 @@ import SwiftLintFramework
 import XCTest
 
 class NumberSeparatorRuleTests: XCTestCase {
-    func testNumberSeparatorWithDefaultConfiguration() {
-        verifyRule(NumberSeparatorRule.description)
-    }
-
     func testNumberSeparatorWithMinimumLength() {
         let nonTriggeringExamples = [
             Example("let foo = 10_000"),

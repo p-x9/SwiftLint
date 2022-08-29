@@ -1,5 +1,17 @@
 import Foundation
 import SourceKittenFramework
+import SwiftSyntax
+#if canImport(SwiftSyntaxParser)
+import SwiftSyntaxParser
+#endif
+
+private let warnSyntaxParserFailureOnceImpl: Void = {
+    queuedPrintError("Could not parse the syntax tree for at least one file. Results may be invalid.")
+}()
+
+private func warnSyntaxParserFailureOnce() {
+    _ = warnSyntaxParserFailureOnceImpl
+}
 
 private typealias FileCacheKey = UUID
 private var responseCache = Cache({ file -> [String: SourceKitRepresentable]? in
@@ -22,6 +34,23 @@ private var structureCache = Cache({ file -> Structure? in
 
 private var structureDictionaryCache = Cache({ file in
     return structureCache.get(file).map { SourceKittenDictionary($0.dictionary) }
+})
+
+private var syntaxTreeCache = Cache({ file -> SourceFileSyntax? in
+    do {
+        return try SyntaxParser.parse(source: file.contents)
+    } catch {
+        warnSyntaxParserFailureOnce()
+        return nil
+    }
+})
+
+private var commandsCache = Cache({ file -> [Command] in
+    guard file.contents.contains("swiftlint:"), let locationConverter = file.locationConverter else {
+        return []
+    }
+    return CommandVisitor(locationConverter: locationConverter)
+        .walk(file: file, handler: \.commands)
 })
 
 private var syntaxMapCache = Cache({ file in
@@ -177,6 +206,14 @@ extension SwiftLintFile {
         return syntaxMap
     }
 
+    internal var syntaxTree: SourceFileSyntax? { syntaxTreeCache.get(self) }
+
+    internal var locationConverter: SourceLocationConverter? {
+        syntaxTree.map { SourceLocationConverter(file: path ?? "<nopath>", tree: $0) }
+    }
+
+    internal var commands: [Command] { commandsCache.get(self) }
+
     internal var syntaxTokensByLines: [[SwiftLintSyntaxToken]] {
         guard let syntaxTokensByLines = syntaxTokensByLinesCache.get(self) else {
             if let handler = assertHandler {
@@ -208,6 +245,8 @@ extension SwiftLintFile {
         syntaxMapCache.invalidate(self)
         syntaxTokensByLinesCache.invalidate(self)
         syntaxKindsByLinesCache.invalidate(self)
+        syntaxTreeCache.invalidate(self)
+        commandsCache.invalidate(self)
     }
 
     internal static func clearCaches() {
@@ -219,5 +258,7 @@ extension SwiftLintFile {
         syntaxMapCache.clear()
         syntaxTokensByLinesCache.clear()
         syntaxKindsByLinesCache.clear()
+        syntaxTreeCache.clear()
+        commandsCache.clear()
     }
 }

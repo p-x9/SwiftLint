@@ -25,10 +25,10 @@ struct UnusedDeclarationRuleExamples {
         }
 
         let changes = [Change.insert(0), .delete(0)]
-        changes.deletes()
+        _ = changes.deletes()
         """),
         Example("""
-        struct Item {}
+        struct Item: Codable {}
         struct ResponseModel: Codable {
             let items: [Item]
 
@@ -79,18 +79,38 @@ struct UnusedDeclarationRuleExamples {
           indirect case optional(Component?)
         }
 
-        @_functionBuilder
+        @resultBuilder
         struct ComponentBuilder {
-          static func buildExpression(_ string: StaticString) -> Component {
-            return .string(string)
-          }
-
           static func buildBlock(_ components: Component...) -> Component {
             return .array(components)
           }
 
-          static func buildIf(_ value: Component?) -> Component {
-            return .optional(value)
+          static func buildExpression(_ string: StaticString) -> Component {
+            return .string(string)
+          }
+
+          static func buildOptional(_ component: Component?) -> Component {
+            return .optional(component)
+          }
+
+          static func buildEither(first component: Component) -> Component {
+            return component
+          }
+
+          static func buildEither(second component: Component) -> Component {
+            return component
+          }
+
+          static func buildArray(_ components: [Component]) -> Component {
+            return .array(components)
+          }
+
+          static func buildLimitedAvailability(_ component: Component) -> Component {
+            return component
+          }
+
+          static func buildFinalResult(_ component: Component) -> Component {
+            return component
           }
         }
 

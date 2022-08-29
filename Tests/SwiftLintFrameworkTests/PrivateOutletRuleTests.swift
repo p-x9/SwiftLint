@@ -2,10 +2,6 @@ import SwiftLintFramework
 import XCTest
 
 class PrivateOutletRuleTests: XCTestCase {
-    func testWithDefaultConfiguration() {
-        verifyRule(PrivateOutletRule.description)
-    }
-
     func testWithAllowPrivateSet() {
         let baseDescription = PrivateOutletRule.description
         let nonTriggeringExamples = baseDescription.nonTriggeringExamples + [

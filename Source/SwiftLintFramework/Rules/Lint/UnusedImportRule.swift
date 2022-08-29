@@ -3,7 +3,7 @@ import SourceKittenFramework
 
 private let moduleToLog = ProcessInfo.processInfo.environment["SWIFTLINT_LOG_MODULE_USAGE"]
 
-public struct UnusedImportRule: CorrectableRule, ConfigurationProviderRule, AnalyzerRule, AutomaticTestableRule {
+public struct UnusedImportRule: CorrectableRule, ConfigurationProviderRule, AnalyzerRule {
     public var configuration = UnusedImportConfiguration(severity: .warning, requireExplicitImports: false,
                                                          allowedTransitiveImports: [], alwaysKeepImports: [])
 
@@ -102,8 +102,13 @@ private extension SwiftLintFile {
     func getImportUsage(compilerArguments: [String], configuration: UnusedImportConfiguration) -> [ImportUsage] {
         var (imports, usrFragments) = getImportsAndUSRFragments(compilerArguments: compilerArguments)
 
-        // Always disallow 'import Swift' because it's available without importing.
+        // Always disallow 'Swift' and 'SwiftShims' because they're always available without importing.
         usrFragments.remove("Swift")
+        usrFragments.remove("SwiftShims")
+        if SwiftVersion.current >= .fiveDotSix {
+            usrFragments.remove("main")
+        }
+
         var unusedImports = imports.subtracting(usrFragments).subtracting(configuration.alwaysKeepImports)
         // Certain Swift attributes requires importing Foundation.
         if unusedImports.contains("Foundation") && containsAttributesRequiringFoundation() {

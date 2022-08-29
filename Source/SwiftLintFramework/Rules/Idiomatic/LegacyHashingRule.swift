@@ -1,6 +1,6 @@
 import SourceKittenFramework
 
-public struct LegacyHashingRule: ASTRule, ConfigurationProviderRule, AutomaticTestableRule {
+public struct LegacyHashingRule: ASTRule, ConfigurationProviderRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -10,7 +10,6 @@ public struct LegacyHashingRule: ASTRule, ConfigurationProviderRule, AutomaticTe
         name: "Legacy Hashing",
         description: "Prefer using the `hash(into:)` function instead of overriding `hashValue`",
         kind: .idiomatic,
-        minSwiftVersion: .fourDotTwo,
         nonTriggeringExamples: [
             Example("""
             struct Foo: Hashable {

@@ -2,10 +2,6 @@ import SwiftLintFramework
 import XCTest
 
 class TypeNameRuleTests: XCTestCase {
-    func testTypeName() {
-        verifyRule(TypeNameRule.description)
-    }
-
     func testTypeNameWithAllowedSymbols() {
         let baseDescription = TypeNameRule.description
         let nonTriggeringExamples = baseDescription.nonTriggeringExamples + [

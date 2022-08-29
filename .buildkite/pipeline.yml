@@ -1,0 +1,21 @@
+steps:
+  - label: "Bazel"
+    commands:
+      - echo "+++ Build"
+      - bazel build :swiftlint
+      - echo "+++ Test"
+      - bazel test --test_output=errors //Tests/...
+  - label: "Danger"
+    commands:
+      - echo "--- Build Danger"
+      - bazel build //tools:danger
+      - echo "+++ Run Danger"
+      - ./bazel-bin/tools/danger --verbose
+  - label: "Analyze"
+    commands:
+      - echo "+++ Analyze"
+      - bazel test -c opt --test_output=streamed --test_timeout=1800 --spawn_strategy=local analyze
+  - label: "TSan"
+    commands:
+      - echo "+++ Test"
+      - bazel test --xcode_version_config=//bazel:xcode_config --test_output=streamed --build_tests_only --features=tsan --test_timeout=600 //Tests/...

@@ -1,6 +1,6 @@
 import SourceKittenFramework
 
-public struct ClosureBodyLengthRule: OptInRule, ASTRule, ConfigurationProviderRule, AutomaticTestableRule {
+public struct ClosureBodyLengthRule: OptInRule, ASTRule, ConfigurationProviderRule {
     public var configuration = SeverityLevelsConfiguration(warning: 20, error: 100)
 
     public init() {}
@@ -10,7 +10,6 @@ public struct ClosureBodyLengthRule: OptInRule, ASTRule, ConfigurationProviderRu
         name: "Closure Body Length",
         description: "Closure bodies should not span too many lines.",
         kind: .metrics,
-        minSwiftVersion: .fourDotTwo,
         nonTriggeringExamples: ClosureBodyLengthRuleExamples.nonTriggeringExamples,
         triggeringExamples: ClosureBodyLengthRuleExamples.triggeringExamples
     )

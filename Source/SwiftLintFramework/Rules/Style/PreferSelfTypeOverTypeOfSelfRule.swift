@@ -1,8 +1,7 @@
 import Foundation
 import SourceKittenFramework
 
-public struct PreferSelfTypeOverTypeOfSelfRule: OptInRule, ConfigurationProviderRule, SubstitutionCorrectableRule,
-                                                AutomaticTestableRule {
+public struct PreferSelfTypeOverTypeOfSelfRule: OptInRule, ConfigurationProviderRule, SubstitutionCorrectableRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public static let description = RuleDescription(
@@ -118,10 +117,6 @@ public struct PreferSelfTypeOverTypeOfSelfRule: OptInRule, ConfigurationProvider
     }
 
     public func violationRanges(in file: SwiftLintFile) -> [NSRange] {
-        guard SwiftVersion.current >= Self.description.minSwiftVersion else {
-            return []
-        }
-
         let pattern = "((?:Swift\\s*\\.\\s*)?type\\(\\s*of\\:\\s*self\\s*\\))\\s*\\."
         return file.matchesAndSyntaxKinds(matching: pattern)
             .filter {

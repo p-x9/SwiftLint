@@ -1,6 +1,14 @@
 import Foundation
 import SourceKittenFramework
 
+private let warnSourceKitFailedOnceImpl: Void = {
+    queuedPrintError("SourceKit-based rules will be skipped because sourcekitd has failed.")
+}()
+
+private func warnSourceKitFailedOnce() {
+    _ = warnSourceKitFailedOnceImpl
+}
+
 private struct LintResult {
     let violations: [StyleViolation]
     let ruleTime: (id: String, time: Double)?
@@ -54,7 +62,13 @@ private extension Rule {
               configuration: Configuration,
               superfluousDisableCommandRule: SuperfluousDisableCommandRule?,
               compilerArguments: [String]) -> LintResult? {
+        // Empty files shouldn't trigger violations
+        guard !file.isEmpty, SwiftVersion.current >= Self.description.minSwiftVersion else {
+            return nil
+        }
+
         if !(self is SourceKitFreeRule) && file.sourcekitdFailed {
+            warnSourceKitFailedOnce()
             return nil
         }
 
@@ -195,13 +209,15 @@ public struct CollectedLinter {
 
     private func getStyleViolations(using storage: RuleStorage,
                                     benchmark: Bool = false) -> ([StyleViolation], [(id: String, time: Double)]) {
+        guard !file.isEmpty else {
+            // Empty files shouldn't trigger violations
+            return ([], [])
+        }
+
         if let cached = cachedStyleViolations(benchmark: benchmark) {
             return cached
         }
 
-        if file.sourcekitdFailed {
-            queuedPrintError("Most rules will be skipped because sourcekitd has failed.")
-        }
         let regions = file.regions()
         let superfluousDisableCommandRule = rules.first(where: {
             $0 is SuperfluousDisableCommandRule
@@ -268,11 +284,17 @@ public struct CollectedLinter {
         }
 
         if let parserDiagnostics = file.parserDiagnostics {
-            queuedPrintError(
-                "Skipping correcting file because it produced Swift parser diagnostics: \(file.path ?? "<nopath>")"
-            )
-            queuedPrintError(toJSON(["diagnostics": parserDiagnostics]))
-            return []
+            let errorDiagnostics = parserDiagnostics.filter { diagnostic in
+                diagnostic["key.severity"] as? String == "source.diagnostic.severity.error"
+            }
+
+            if errorDiagnostics.isNotEmpty {
+                queuedPrintError(
+                    "Skipping correcting file because it produced Swift parser errors: \(file.path ?? "<nopath>")"
+                )
+                queuedPrintError(toJSON(["diagnostics": errorDiagnostics]))
+                return []
+            }
         }
 
         var corrections = [Correction]()
@@ -323,5 +345,11 @@ public struct CollectedLinter {
                 )
             }
         }
+    }
+}
+
+private extension SwiftLintFile {
+    var isEmpty: Bool {
+        contents.isEmpty || contents == "\n"
     }
 }

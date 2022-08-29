@@ -2,12 +2,6 @@ import SwiftLintFramework
 import XCTest
 
 class XCTSpecificMatcherRuleTests: XCTestCase {
-    func testRule() {
-        verifyRule(XCTSpecificMatcherRule.description)
-    }
-
-    // MARK: - Reasons
-
     func testEqualTrue() {
         let example = Example("XCTAssertEqual(a, true)")
         let violations = self.violations(example)

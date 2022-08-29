@@ -1,7 +1,7 @@
 import Foundation
 import SourceKittenFramework
 
-public struct ReduceIntoRule: ASTRule, ConfigurationProviderRule, OptInRule, AutomaticTestableRule {
+public struct ReduceIntoRule: ASTRule, ConfigurationProviderRule, OptInRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -11,7 +11,6 @@ public struct ReduceIntoRule: ASTRule, ConfigurationProviderRule, OptInRule, Aut
         name: "Reduce Into",
         description: "Prefer `reduce(into:_:)` over `reduce(_:_:)` for copy-on-write types",
         kind: .performance,
-        minSwiftVersion: .four,
         nonTriggeringExamples: [
             Example("""
             let foo = values.reduce(into: "abc") { $0 += "\\($1)" }

@@ -16,7 +16,10 @@ class IntegrationTests: XCTestCase {
     func testSwiftLintLints() {
         // This is as close as we're ever going to get to a self-hosting linter.
         let swiftFiles = config.lintableFiles(inPath: "", forceExclude: false)
-        XCTAssert(swiftFiles.contains(where: { #file == $0.path }), "current file should be included")
+        XCTAssert(
+            swiftFiles.contains(where: { #file.bridge().absolutePathRepresentation() == $0.path }),
+            "current file should be included"
+        )
 
         let storage = RuleStorage()
         let violations = swiftFiles.parallelFlatMap {
@@ -66,7 +69,7 @@ class IntegrationTests: XCTestCase {
         }
 
         let swiftlintInSandboxArgs = ["sandbox-exec", "-f", seatbeltURL.path, "sh", "-c",
-                                      "SWIFTLINT_SWIFT_VERSION=3 \(swiftlintURL.path) --no-cache"]
+                                      "SWIFTLINT_SWIFT_VERSION=5 \(swiftlintURL.path) --no-cache"]
         let swiftlintResult = execute(swiftlintInSandboxArgs, in: testSwiftURL.deletingLastPathComponent())
         let statusWithoutCrash: Int32 = 0
         let stdoutWithoutCrash = """
@@ -139,7 +142,6 @@ private extension String {
 private func execute(_ args: [String],
                      in directory: URL? = nil,
                      input: Data? = nil) -> (status: Int32, stdout: String, stderr: String) {
-    // swiftlint:disable:previous large_tuple
     let process = Process()
     process.launchPath = "/usr/bin/env"
     process.arguments = args
@@ -175,7 +177,8 @@ private func prepareSandbox() -> (testSwiftURL: URL, seatbeltURL: URL)? {
     //    ├── AADA6B05-2E06-4E7F-BA48-8B3AF44415E3.sb
     do {
         // `/private/tmp` is standardized to `/tmp` that is symbolic link to `/private/tmp`.
-        let temporaryDirectoryURL = URL(fileURLWithPath: "/tmp").appendingPathComponent(UUID().uuidString)
+        let temporaryDirectoryURL = URL(fileURLWithPath: "/tmp", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temporaryDirectoryURL, withIntermediateDirectories: true)
 
         let seatbeltURL = temporaryDirectoryURL.appendingPathExtension("sb")

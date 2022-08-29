@@ -4,10 +4,6 @@ import XCTest
 class CompilerProtocolInitRuleTests: XCTestCase {
     private let ruleID = CompilerProtocolInitRule.description.identifier
 
-    func testWithDefaultConfiguration() {
-        verifyRule(CompilerProtocolInitRule.description)
-    }
-
     func testViolationMessageForExpressibleByIntegerLiteral() throws {
         let config = try XCTUnwrap(makeConfig(nil, ruleID))
         let allViolations = violations(Example("let a = NSNumber(integerLiteral: 1)"), config: config)

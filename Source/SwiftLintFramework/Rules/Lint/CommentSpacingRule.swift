@@ -1,9 +1,7 @@
 import Foundation
 import SourceKittenFramework
 
-public struct CommentSpacingRule: ConfigurationProviderRule,
-                                  SubstitutionCorrectableRule,
-                                  AutomaticTestableRule {
+public struct CommentSpacingRule: ConfigurationProviderRule, SubstitutionCorrectableRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -133,7 +131,7 @@ public struct CommentSpacingRule: ConfigurationProviderRule,
                     .map(StringView.init)
                     .map { commentBody in
                         // Look for 2+ slash characters followed immediately by
-                        // a non-colon, non-whitespace charcter or by a colon
+                        // a non-colon, non-whitespace character or by a colon
                         // followed by a non-whitespace character other than #
                         regex(#"^(?:\/){2,}+(?:[^\s:]|:[^\s#])"#).matches(in: commentBody, options: .anchored)
                             .compactMap { result in

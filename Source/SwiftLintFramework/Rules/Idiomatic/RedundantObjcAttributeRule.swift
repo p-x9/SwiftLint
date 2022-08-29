@@ -4,8 +4,7 @@ import SourceKittenFramework
 private let kindsImplyingObjc: Set<SwiftDeclarationAttributeKind> =
     [.ibaction, .iboutlet, .ibinspectable, .gkinspectable, .ibdesignable, .nsManaged]
 
-public struct RedundantObjcAttributeRule: SubstitutionCorrectableRule, ConfigurationProviderRule,
-    AutomaticTestableRule {
+public struct RedundantObjcAttributeRule: SubstitutionCorrectableRule, ConfigurationProviderRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -15,7 +14,6 @@ public struct RedundantObjcAttributeRule: SubstitutionCorrectableRule, Configura
         name: "Redundant @objc Attribute",
         description: "Objective-C attribute (@objc) is redundant in declaration.",
         kind: .idiomatic,
-        minSwiftVersion: .fourDotOne,
         nonTriggeringExamples: RedundantObjcAttributeRuleExamples.nonTriggeringExamples,
         triggeringExamples: RedundantObjcAttributeRuleExamples.triggeringExamples,
         corrections: RedundantObjcAttributeRuleExamples.corrections)

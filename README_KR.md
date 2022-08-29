@@ -27,11 +27,11 @@ Podfile에 아래 라인을 추가하기만 하면 됩니다.
 pod 'SwiftLint'
 ```
 
-이를 실행하면 다음번 `pod install` 실행시 SwiftLint 바이너리 및 `Pods/`에 있는 디펜던시들을 다운로드하고, Script Build Phases에서 `${PODS_ROOT}/SwiftLint/swiftlint` 명령을 사용할 수 있게 됩니다.
+이를 실행하면 다음번 `pod install` 실행 시 SwiftLint 바이너리 및 `Pods/`에 있는 디펜던시들을 다운로드하고, Script Build Phases에서 `${PODS_ROOT}/SwiftLint/swiftlint` 명령을 사용할 수 있게 됩니다.
 
 CocoaPods를 사용하면 최신 버전 외에도 SwiftLint의 특정 버전을 설치할 수 있기 때문에 이 방법을 권장합니다. (Homebrew는 최신 버전만 설치 가능)
 
-이렇게 했을때 SwiftLint 바이너리 및 그에 종속된 바이너리들과 스위프트 바이너리까지 `Pods/` 디렉토리에 추가되기 때문에, git 등의 SCM에 이런 디렉토리들을 체크인하는 것은 권장하지 않습니다.
+이렇게 했을 때 SwiftLint 바이너리 및 그에 종속된 바이너리들과 스위프트 바이너리까지 `Pods/` 디렉터리에 추가되기 때문에, git 등의 SCM에 이런 디렉터리들을 체크인하는 것은 권장하지 않습니다.
 
 ### [Mint](https://github.com/yonaskolb/mint)를 사용하는 경우:
 ```
@@ -44,7 +44,7 @@ $ mint install realm/SwiftLint
 
 ### 소스를 직접 컴파일하는 경우:
 
-본 프로젝트를 클론해서 빌드할 수도 있습니다. `make install` 명령을 사용합니다. (Xcode 11.4 이후 버전)
+본 프로젝트를 클론해서 빌드할 수도 있습니다. `make install` 명령을 사용합니다. (Xcode 12.5 이후 버전)
 
 ## 사용 방법
 
@@ -56,7 +56,7 @@ $ mint install realm/SwiftLint
 
 ### Xcode
 
-SwiftLint를 Xcode 스킴에 통합하여 IDE 상에 경고나 에러를 표시할 수 있습니다. "Run Script Phase"를 새로 만들고 아래 스크립트를 추가하기만 하면 됩니다.
+SwiftLint를 Xcode 프로젝트에 통합하여 IDE 상에 경고나 에러를 표시할 수 있습니다. 프로젝트의 파일 내비게이터에서 타겟 앱을 선택 후 "Build Phases" 탭으로 이동합니다. + 버튼을 클릭한 후 "Run Script Phase"를 선택합니다. 그 후 아래 스크립트를 추가하기만 하면 됩니다.
 
 ```bash
 if which swiftlint >/dev/null; then
@@ -67,6 +67,31 @@ fi
 ```
 
 ![](assets/runscript.png)
+
+만약, 애플 실리콘 환경에서 Homebrew를 통해 SwiftLint를 설치했다면, 아마도 다음과 같은 경고를 겪었을 것입니다.
+
+> warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint
+
+그 이유는, 애플 실리콘 기반 맥에서 Homebrew는 기본적으로 바이너리들을 `/opt/homebrew/bin`에 저장하기 때문입니다. SwiftLint가 어디 있는지 찾는 것을 Xcode에 알려주기 위해, build phase에서 `/opt/homebrew/bin`를 `PATH` 환경 변수에 동시에 추가하여야 합니다.
+
+```bash
+export PATH="$PATH:/opt/homebrew/bin"
+if which swiftlint > /dev/null; then
+  swiftlint
+else
+  echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+fi
+```
+
+혹은 아래와 같이 `/usr/local/bin`에 심볼릭 링크를 생성하여 실제 바이너리가 있는 곳으로 포인팅할 수 있습니다. :
+
+```bash
+ln -s /opt/homebrew/bin/swiftlint /usr/local/bin/swiftlint
+```
+
+당신은 SwiftLint phase를 'Compile Sources' 단계 직전으로 옮겨 컴파일 전에 에러를 빠르게 찾고 싶어 할 것입니다. 하지만, SwiftLint는 컴파일러의 구문 분석 단계를 완벽히 수행하는 유효한 Swift 코드를 실행하기 위해 설계되었습니다. 따라서, 'Compile Sources' 전에 SwiftLint를 실행하면 일부 부정확한 오류가 발생할 수도 있습니다.
+
+만약 당신은 위반 사항(violations)을 동시에 수정하는 것을 원한다면, 스크립트에 `swiftlint` 대신 `swiftlint --fix && swiftlint`을 적어야 합니다. 이는 프로젝트의 수정 가능한 모든 위반 사항들이 수정되고 나머지 위반 사항에 대한 경고가 표시된다는 것을 의미합니다.
 
 CocoaPods를 사용해서 설치한 경우는 아래 스크립트를 대신 사용합니다.
 
@@ -116,10 +141,10 @@ Available commands:
    version      Display the current version of SwiftLint
 ```
 
-스위프트 파일이 있는 디렉토리에서 `swiftlint`를 실행합니다. 디렉토리는 재귀적으로 탐색됩니다.
+스위프트 파일이 있는 디렉터리에서 `swiftlint`를 실행합니다. 디렉터리는 재귀적으로 탐색됩니다.
 
 `lint`나 `autocorrect`를 사용할 때 여러 파일(예를 들면, [`ExtraBuildPhase`](https://github.com/norio-nomura/ExtraBuildPhase) 플러그인에 의해 Xcode가 변경한 파일들 혹은 `git ls-files -m` 명령으로 인해 작업 트리에서 변경된 파일들)을 지정하려면 `--use-script-input-files` 옵션을 넘기고 다음 인스턴스 변수들을 설정하면 됩니다. `SCRIPT_INPUT_FILE_COUNT` and
-`SCRIPT_INPUT_FILE_0`, `SCRIPT_INPUT_FILE_1`...`SCRIPT_INPUT_FILE_{SCRIPT_INPUT_FILE_COUNT}`
+`SCRIPT_INPUT_FILE_0`, `SCRIPT_INPUT_FILE_1`...`SCRIPT_INPUT_FILE_{SCRIPT_INPUT_FILE_COUNT - 1}`
 
 이는 [Xcode의 커스텀 스크립트 단계](http://indiestack.com/2014/12/speeding-up-custom-script-phases/)에 입력 파일로 환경 변수를 지정하는 것과 동일합니다.
 
@@ -143,7 +168,7 @@ SwiftLint가 어느 스위프트 툴체인을 사용할지 결정하는 순서�
 * `~/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain`
 * `~/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain`
 
-`sourcekitd.framework`은 위에서 선택된 경로의 `usr/lib/` 하위 디렉토리에 존재해야 합니다.
+`sourcekitd.framework`은 위에서 선택된 경로의 `usr/lib/` 하위 디렉터리에 존재해야 합니다.
 
 `TOOLCHAINS` 환경 변수에 스위프트 툴체인 버전을 식별할 수 있는 값을 리버스 DNS 형식으로 지정할 수도 있습니다.
 
@@ -203,7 +228,7 @@ let noWarning3 = NSNumber() as! Int
 
 ### 설정
 
-SwiftLint가 실행될 디렉토리에 `.swiftlint.yml` 파일을 추가해서 SwiftLint를 설정할 수 있습니다. 아래 파라미터들을 설정 가능합니다.
+SwiftLint가 실행될 디렉터리에 `.swiftlint.yml` 파일을 추가해서 SwiftLint를 설정할 수 있습니다. 아래 파라미터들을 설정 가능합니다.
 
 룰 적용여부 설정:
 
@@ -268,7 +293,7 @@ reporter: "xcode" # 보고 유형 (xcode, json, csv, codeclimate, checkstyle, ju
 ```yaml
 custom_rules:
   pirates_beat_ninjas: # 룰 식별자
-    included: ".*.swift" # 린트 실행시 포함할 경로를 정의하는 정규표현식. 선택 가능.
+    included: ".*.swift" # 린트 실행 시 포함할 경로를 정의하는 정규표현식. 선택 가능.
     name: "Pirates Beat Ninjas" # 룰 이름. 선택 가능.
     regex: "([nN]inja)" # 패턴 매칭
     match_kinds: # 매칭할 SyntaxKinds. 선택 가능.
@@ -311,8 +336,8 @@ custom_rules:
 
 SwiftLint는 설정 파일을 중첩되게 구성해서 린트 과정을 더욱 세밀하게 제어할 수 있습니다.
 
-* 디렉토리 구조에서 필요한 곳이면 어디든지 `.swiftlint.yml` 파일을 추가할 수 있습니다.
-* 각 파일은 자신의 디렉토리 내에 있는 설정 파일을 사용하거나, 계층구조 상 가장 가까운 부모 디렉토리에 있는 설정 파일을 사용해서 린트됩니다. 별도로 설정 파일이 존재하지 않으면 루트에 있는 설정 파일이 사용됩니다.
+* 디렉터리 구조에서 필요한 곳이면 어디든지 `.swiftlint.yml` 파일을 추가할 수 있습니다.
+* 각 파일은 자신의 디렉터리 내에 있는 설정 파일을 사용하거나, 계층구조 상 가장 가까운 부모 디렉터리에 있는 설정 파일을 사용해서 린트됩니다. 별도로 설정 파일이 존재하지 않으면 루트에 있는 설정 파일이 사용됩니다.
 * 중첩 구성에서 `excluded` 및 `included`는 무시됩니다.
 
 ### 자동 수정

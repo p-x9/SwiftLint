@@ -1,6 +1,6 @@
 import SourceKittenFramework
 
-public struct ContainsOverFilterCountRule: CallPairRule, OptInRule, ConfigurationProviderRule, AutomaticTestableRule {
+public struct ContainsOverFilterCountRule: CallPairRule, OptInRule, ConfigurationProviderRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -16,7 +16,7 @@ public struct ContainsOverFilterCountRule: CallPairRule, OptInRule, Configuratio
                 Example("let result = myList.filter { $0 % 2 == 0 }.count \(operation) 1\n"),
                 Example("let result = myList.filter(where: { $0 % 2 == 0 }).count \(operation) 01\n")
             ]
-        } +  [
+        } + [
             Example("let result = myList.contains(where: { $0 % 2 == 0 })\n"),
             Example("let result = !myList.contains(where: { $0 % 2 == 0 })\n"),
             Example("let result = myList.contains(10)\n")

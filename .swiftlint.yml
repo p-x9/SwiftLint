@@ -36,7 +36,6 @@ opt_in_rules:
   - joined_default_parameter
   - last_where
   - legacy_multiple
-  - legacy_random
   - literal_expression_end_indentation
   - lower_acl_than_parent
   - modifier_order
@@ -48,6 +47,7 @@ opt_in_rules:
   - overridden_super_call
   - override_in_extension
   - pattern_matching_keywords
+  - prefer_self_in_static_references
   - prefer_self_type_over_type_of_self
   - private_action
   - private_outlet
@@ -59,6 +59,7 @@ opt_in_rules:
   - reduce_into
   - redundant_nil_coalescing
   - redundant_type_annotation
+  - return_value_from_void_function
   - single_test_class
   - sorted_first_last
   - sorted_imports
@@ -79,15 +80,13 @@ opt_in_rules:
 identifier_name:
   excluded:
     - id
+large_tuple: 3
 number_separator:
   minimum_length: 5
 file_name:
   excluded:
-    - main.swift
-    - LinuxMain.swift
+    - GeneratedTests.swift
     - TestHelpers.swift
-    - shim.swift
-    - AutomaticRuleTests.generated.swift
 
 custom_rules:
   rule_id:

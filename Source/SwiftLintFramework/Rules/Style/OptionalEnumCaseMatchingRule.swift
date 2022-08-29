@@ -1,8 +1,7 @@
 import Foundation
 import SourceKittenFramework
 
-public struct OptionalEnumCaseMatchingRule: SubstitutionCorrectableASTRule, ConfigurationProviderRule,
-                                            AutomaticTestableRule, OptInRule {
+public struct OptionalEnumCaseMatchingRule: SubstitutionCorrectableASTRule, ConfigurationProviderRule, OptInRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -167,7 +166,7 @@ public struct OptionalEnumCaseMatchingRule: SubstitutionCorrectableASTRule, Conf
     public func violationRanges(in file: SwiftLintFile,
                                 kind: StatementKind,
                                 dictionary: SourceKittenDictionary) -> [NSRange] {
-        guard SwiftVersion.current >= Self.description.minSwiftVersion, kind == .case else {
+        guard kind == .case else {
             return []
         }
 

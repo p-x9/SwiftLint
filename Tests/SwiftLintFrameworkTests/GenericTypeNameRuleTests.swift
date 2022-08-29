@@ -2,10 +2,6 @@ import SwiftLintFramework
 import XCTest
 
 class GenericTypeNameRuleTests: XCTestCase {
-    func testGenericTypeName() {
-        verifyRule(GenericTypeNameRule.description)
-    }
-
     func testGenericTypeNameWithAllowedSymbols() {
         let baseDescription = GenericTypeNameRule.description
         let nonTriggeringExamples = baseDescription.nonTriggeringExamples + [

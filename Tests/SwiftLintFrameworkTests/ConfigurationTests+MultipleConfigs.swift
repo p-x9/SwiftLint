@@ -1,6 +1,8 @@
 @testable import SwiftLintFramework
 import XCTest
 
+// swiftlint:disable file_length
+
 private extension Configuration {
     func contains<T: Rule>(rule: T.Type) -> Bool {
         return rules.contains { $0 is T }
@@ -76,7 +78,8 @@ extension ConfigurationTests {
         )
         guard let mergedCustomRules = mergedConfiguration.rules.first(where: { $0 is CustomRules }) as? CustomRules
             else {
-            return XCTFail("Custom rules are expected to be present")
+            XCTFail("Custom rules are expected to be present")
+            return
         }
         XCTAssertTrue(
             mergedCustomRules.configuration.customRuleConfigurations.contains { $0.identifier == "no_abc" }
@@ -93,7 +96,8 @@ extension ConfigurationTests {
         )
         guard let mergedCustomRules = mergedConfiguration.rules.first(where: { $0 is CustomRules }) as? CustomRules
             else {
-            return XCTFail("Custom rules are expected to be present")
+            XCTFail("Custom rules are expected to be present")
+            return
         }
         XCTAssertFalse(
             mergedCustomRules.configuration.customRuleConfigurations.contains { $0.identifier == "no_abc" }
@@ -113,7 +117,8 @@ extension ConfigurationTests {
         )
         guard let mergedCustomRules = mergedConfiguration.rules.first(where: { $0 is CustomRules }) as? CustomRules
             else {
-            return XCTFail("Custom rules are expected to be present")
+            XCTFail("Custom rules are expected to be present")
+            return
         }
         XCTAssertTrue(
             mergedCustomRules.configuration.customRuleConfigurations.contains { $0.identifier == "no_abc" }
@@ -134,7 +139,8 @@ extension ConfigurationTests {
         )
         guard let mergedCustomRules = mergedConfiguration.rules.first(where: { $0 is CustomRules }) as? CustomRules
             else {
-            return XCTFail("Custom rules are expected to be present")
+            XCTFail("Custom rules are expected to be present")
+            return
         }
         XCTAssertFalse(
             mergedCustomRules.configuration.customRuleConfigurations.contains { $0.identifier == "no_abc" }
@@ -152,7 +158,8 @@ extension ConfigurationTests {
         )
         guard let mergedCustomRules = mergedConfiguration.rules.first(where: { $0 is CustomRules }) as? CustomRules
             else {
-            return XCTFail("Custom rules are expected to be present")
+            XCTFail("Custom rules are expected to be present")
+            return
         }
         XCTAssertEqual(
             mergedCustomRules.configuration.customRuleConfigurations.filter { $0.identifier == "no_abc" }.count, 1
@@ -160,7 +167,8 @@ extension ConfigurationTests {
         guard let customRule = (mergedCustomRules.configuration.customRuleConfigurations.first {
             $0.identifier == "no_abc"
         }) else {
-            return XCTFail("Custom rule is expected to be present")
+            XCTFail("Custom rule is expected to be present")
+            return
         }
         XCTAssertEqual(customRule.severityConfiguration.severity, .error)
     }
@@ -218,6 +226,10 @@ extension ConfigurationTests {
 
     // MARK: - Child & Parent Configs
     func testValidChildConfig() {
+        guard !isRunningWithBazel else {
+            return
+        }
+
         for path in [Mock.Dir.childConfigTest1, Mock.Dir.childConfigTest2] {
             FileManager.default.changeCurrentDirectoryPath(path)
 
@@ -240,6 +252,10 @@ extension ConfigurationTests {
     }
 
     func testCommandLineChildConfigs() {
+        guard !isRunningWithBazel else {
+            return
+        }
+
         for path in [Mock.Dir.childConfigTest1, Mock.Dir.childConfigTest2] {
             FileManager.default.changeCurrentDirectoryPath(path)
 
@@ -386,14 +402,8 @@ extension ConfigurationTests {
             Set(configuration2.rulesWrapper.allRulesWrapped.map { $0.rule.configurationDescription })
         )
 
-        XCTAssertEqual(
-            Set(configuration1.includedPaths),
-            Set(configuration2.includedPaths)
-        )
+        XCTAssertEqual(Set(configuration1.includedPaths), Set(configuration2.includedPaths))
 
-        XCTAssertEqual(
-            Set(configuration1.excludedPaths),
-            Set(configuration2.excludedPaths)
-        )
+        XCTAssertEqual(Set(configuration1.excludedPaths), Set(configuration2.excludedPaths))
     }
 }

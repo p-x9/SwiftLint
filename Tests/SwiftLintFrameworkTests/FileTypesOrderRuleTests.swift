@@ -4,11 +4,6 @@ import XCTest
 // swiftlint:disable function_body_length
 
 class FileTypesOrderRuleTests: XCTestCase {
-    func testFileTypesOrderWithDefaultConfiguration() {
-        // Test with default parameters
-        verifyRule(FileTypesOrderRule.description)
-    }
-
     func testFileTypesOrderReversedOrder() {
         // Test with reversed `order` entries
         let nonTriggeringExamples = [

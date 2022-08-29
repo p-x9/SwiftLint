@@ -21,11 +21,6 @@ public struct TypeNameRule: ASTRule, ConfigurationProviderRule {
 
     private let typeKinds = SwiftDeclarationKind.typeKinds
 
-    public func validate(file: SwiftLintFile) -> [StyleViolation] {
-        return validateTypeAliasesAndAssociatedTypes(in: file) +
-            validate(file: file, dictionary: file.structureDictionary)
-    }
-
     public func validate(file: SwiftLintFile, kind: SwiftDeclarationKind,
                          dictionary: SourceKittenDictionary) -> [StyleViolation] {
         guard typeKinds.contains(kind),
@@ -35,29 +30,6 @@ public struct TypeNameRule: ASTRule, ConfigurationProviderRule {
         }
 
         return validate(name: name, dictionary: dictionary, file: file, offset: offset)
-    }
-
-    private func validateTypeAliasesAndAssociatedTypes(in file: SwiftLintFile) -> [StyleViolation] {
-        guard SwiftVersion.current < .fourDotOne else {
-            return []
-        }
-
-        let rangesAndTokens = file.rangesAndTokens(matching: "(typealias|associatedtype)\\s+.+?\\b")
-        return rangesAndTokens.flatMap { _, tokens -> [StyleViolation] in
-            guard tokens.count == 2,
-                let keywordToken = tokens.first,
-                let nameToken = tokens.last,
-                keywordToken.kind == .keyword,
-                nameToken.kind == .identifier else {
-                    return []
-            }
-
-            guard let name = file.contents(for: nameToken) else {
-                return []
-            }
-
-            return validate(name: name, file: file, offset: nameToken.offset)
-        }
     }
 
     private func validate(name: String, dictionary: SourceKittenDictionary = SourceKittenDictionary([:]),
@@ -76,7 +48,7 @@ public struct TypeNameRule: ASTRule, ConfigurationProviderRule {
                                    location: Location(file: file, byteOffset: offset),
                                    reason: "Type name should only contain alphanumeric characters: '\(name)'")]
         } else if configuration.validatesStartWithLowercase &&
-            !String(name[name.startIndex]).isUppercase() {
+            name.first?.isLowercase == true {
             return [StyleViolation(ruleDescription: Self.description,
                                    severity: .error,
                                    location: Location(file: file, byteOffset: offset),

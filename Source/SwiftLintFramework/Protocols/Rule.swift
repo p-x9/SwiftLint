@@ -89,9 +89,6 @@ extension Rule {
 /// A rule that is not enabled by default. Rules conforming to this need to be explicitly enabled by users.
 public protocol OptInRule: Rule {}
 
-/// A rule that has unit tests automatically generated using Sourcery.
-public protocol AutomaticTestableRule: Rule {}
-
 /// A rule that is user-configurable.
 public protocol ConfigurationProviderRule: Rule {
     /// The type of configuration used to configure this rule.
@@ -187,7 +184,7 @@ public protocol SubstitutionCorrectableASTRule: SubstitutionCorrectableRule, AST
     ///
     /// - parameter file:       The file in which to find ranges of violations for this rule.
     /// - parameter kind:       The kind of token being recursed over.
-    /// - parameter dictionary: The dicttionary for an AST subset to validate.
+    /// - parameter dictionary: The dictionary for an AST subset to validate.
     ///
     /// - returns: The NSString-based `NSRange`s to be replaced in the specified file.
     func violationRanges(in file: SwiftLintFile, kind: KindType,

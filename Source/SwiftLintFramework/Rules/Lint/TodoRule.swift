@@ -4,7 +4,7 @@ import SourceKittenFramework
 public extension SyntaxKind {
     /// Returns if the syntax kind is comment-like.
     var isCommentLike: Bool {
-        return SyntaxKind.commentKinds.contains(self)
+        return Self.commentKinds.contains(self)
     }
 }
 
@@ -31,7 +31,7 @@ public struct TodoRule: ConfigurationProviderRule {
             Example("/* ↓TODO: */\n"),
             Example("/** ↓FIXME: */\n"),
             Example("/** ↓TODO: */\n")
-        ]
+        ].skipWrappingInCommentTests()
     )
 
     private func customMessage(file: SwiftLintFile, range: NSRange) -> String {

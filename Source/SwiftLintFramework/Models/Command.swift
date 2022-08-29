@@ -1,33 +1,4 @@
 import Foundation
-import SourceKittenFramework
-
-#if os(Linux)
-private extension Scanner {
-    func scanString(string: String) -> String? {
-        return scanString(string)
-    }
-}
-#else
-private extension Scanner {
-    func scanUpToString(_ string: String) -> String? {
-        var result: NSString?
-        let success = scanUpTo(string, into: &result)
-        if success {
-            return result?.bridge()
-        }
-        return nil
-    }
-
-    func scanString(string: String) -> String? {
-        var result: NSString?
-        let success = scanString(string, into: &result)
-        if success {
-            return result?.bridge()
-        }
-        return nil
-    }
-}
-#endif
 
 /// A SwiftLint-interpretable command to modify SwiftLint's behavior embedded as comments in source code.
 public struct Command: Equatable {
@@ -81,7 +52,7 @@ public struct Command: Equatable {
     /// - parameter character:       The character offset within the line in the source file where this command is
     ///                              defined.
     /// - parameter modifier:        This command's modifier, if any.
-    /// - parameter trailingComment: The comment following this command's `-` delimeter, if any.
+    /// - parameter trailingComment: The comment following this command's `-` delimiter, if any.
     public init(action: Action, ruleIdentifiers: Set<RuleIdentifier>, line: Int = 0,
                 character: Int? = nil, modifier: Modifier? = nil, trailingComment: String? = nil) {
         self.action = action
@@ -100,7 +71,7 @@ public struct Command: Equatable {
     ///                           defined.
     public init?(actionString: String, line: Int, character: Int) {
         let scanner = Scanner(string: actionString)
-        _ = scanner.scanString(string: "swiftlint:")
+        _ = scanner.scanString("swiftlint:")
         // (enable|disable)(:previous|:this|:next)
         guard let actionAndModifierString = scanner.scanUpToString(" ") else {
             return nil
@@ -115,14 +86,17 @@ public struct Command: Equatable {
         self.line = line
         self.character = character
 
-        let rawRuleTexts = scanner.scanUpToString(Command.commentDelimiter) ?? ""
+        let rawRuleTexts = scanner.scanUpToString(Self.commentDelimiter) ?? ""
         if scanner.isAtEnd {
             trailingComment = nil
         } else {
             // Store any text after the comment delimiter as the trailingComment.
-            // The addition to scanLocation is to move past the delimiter
-            let startOfCommentPastDelimiter = scanner.scanLocation + Command.commentDelimiter.count
-            trailingComment = scanner.string.bridge().substring(from: startOfCommentPastDelimiter)
+            // The addition to currentIndex is to move past the delimiter
+            trailingComment = String(
+              scanner
+                .string[scanner.currentIndex...]
+                .dropFirst(Self.commentDelimiter.count)
+            )
         }
         let ruleTexts = rawRuleTexts.components(separatedBy: .whitespacesAndNewlines).filter {
             let component = $0.trimmingCharacters(in: .whitespaces)
@@ -132,11 +106,13 @@ public struct Command: Equatable {
         ruleIdentifiers = Set(ruleTexts.map(RuleIdentifier.init(_:)))
 
         // Modifier
-        let hasModifier = actionAndModifierScanner.scanString(string: ":") != nil
+        let hasModifier = actionAndModifierScanner.scanString(":") != nil
         if hasModifier {
-            let modifierString = actionAndModifierScanner.string.bridge()
-                .substring(from: actionAndModifierScanner.scanLocation)
-            modifier = Modifier(rawValue: modifierString)
+            modifier = Modifier(
+              rawValue: String(
+                actionAndModifierScanner.string[actionAndModifierScanner.currentIndex...]
+              )
+            )
         } else {
             modifier = nil
         }

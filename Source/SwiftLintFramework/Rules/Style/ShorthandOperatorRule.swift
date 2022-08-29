@@ -1,7 +1,7 @@
 import Foundation
 import SourceKittenFramework
 
-public struct ShorthandOperatorRule: ConfigurationProviderRule, AutomaticTestableRule {
+public struct ShorthandOperatorRule: ConfigurationProviderRule {
     public var configuration = SeverityConfiguration(.error)
 
     public init() {}
@@ -66,7 +66,7 @@ public struct ShorthandOperatorRule: ConfigurationProviderRule, AutomaticTestabl
 
     public func validate(file: SwiftLintFile) -> [StyleViolation] {
         let contents = file.stringView
-        let matches = ShorthandOperatorRule.violationRegex.matches(in: file)
+        let matches = Self.violationRegex.matches(in: file)
 
         return matches.compactMap { match -> StyleViolation? in
             // byteRanges will have the ranges of captured groups

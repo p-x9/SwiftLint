@@ -1,7 +1,7 @@
 import Foundation
 import SourceKittenFramework
 
-public struct UntypedErrorInCatchRule: OptInRule, ConfigurationProviderRule, AutomaticTestableRule {
+public struct UntypedErrorInCatchRule: OptInRule, ConfigurationProviderRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -106,8 +106,7 @@ public struct UntypedErrorInCatchRule: OptInRule, ConfigurationProviderRule, Aut
         return violationRanges(in: file).map {
             return StyleViolation(ruleDescription: Self.description,
                                   severity: configuration.severity,
-                                  location: Location(file: file, characterOffset: $0.location),
-                                  reason: configuration.consoleDescription)
+                                  location: Location(file: file, characterOffset: $0.location))
         }
     }
 

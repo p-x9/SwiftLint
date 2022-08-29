@@ -1,7 +1,7 @@
 import Foundation
 import SourceKittenFramework
 
-public struct UnusedDeclarationRule: AutomaticTestableRule, ConfigurationProviderRule, AnalyzerRule, CollectingRule {
+public struct UnusedDeclarationRule: ConfigurationProviderRule, AnalyzerRule, CollectingRule {
     public struct FileUSRs: Hashable {
         var referenced: Set<String>
         var declared: Set<DeclaredUSR>
@@ -132,8 +132,8 @@ private extension SwiftLintFile {
               stringKind.starts(with: "source.lang.swift.decl."),
               !stringKind.contains(".accessor."),
               let usr = indexEntity.usr,
-              let line = indexEntity.line.map(Int.init),
-              let column = indexEntity.column.map(Int.init),
+              let line = indexEntity.line,
+              let column = indexEntity.column,
               let kind = indexEntity.declarationKind,
               !declarationKindsToSkip.contains(kind)
         else {
@@ -144,7 +144,9 @@ private extension SwiftLintFile {
             return nil
         }
 
-        let nameOffset = stringView.byteOffset(forLine: line, column: column)
+        guard let nameOffset = stringView.byteOffset(forLine: line, bytePosition: column) else {
+            return nil
+        }
 
         if !configuration.includePublicAndOpen, [.public, .open].contains(editorOpen.aclAtOffset(nameOffset)) {
             return nil
@@ -293,13 +295,13 @@ private extension SourceKittenDictionary {
         // https://github.com/apple/swift-evolution/blob/main/proposals/0289-result-builders.md#result-building-methods
         let resultBuilderStaticMethods = [
             "buildBlock(_:)",
-            "buildIf(_:)",
-            "buildOptional(_:)",
-            "buildEither(_:)",
-            "buildArray(_:)",
             "buildExpression(_:)",
-            "buildFinalResult(_:)",
-            "buildLimitedAvailability(_:)"
+            "buildOptional(_:)",
+            "buildEither(first:)",
+            "buildEither(second:)",
+            "buildArray(_:)",
+            "buildLimitedAvailability(_:)",
+            "buildFinalResult(_:)"
         ]
 
         return resultBuilderStaticMethods.contains(name)
@@ -327,10 +329,3 @@ private let declarationAttributesToSkip: Set<SwiftDeclarationAttributeKind> = [
     .override,
     .uiApplicationMain
 ]
-
-private extension StringView {
-    func byteOffset(forLine line: Int, column: Int) -> ByteCount {
-        guard line > 0 else { return ByteCount(column - 1) }
-        return lines[line - 1].byteRange.location + ByteCount(column - 1)
-    }
-}

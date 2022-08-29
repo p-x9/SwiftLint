@@ -2,8 +2,32 @@ import SwiftLintFramework
 import XCTest
 
 class ExplicitTypeInterfaceRuleTests: XCTestCase {
-    func testExplicitTypeInterface() {
-        verifyRule(ExplicitTypeInterfaceRule.description)
+    func testLocalVars() {
+        let nonTriggeringExamples = [
+            Example("func foo() {\nlet intVal: Int = 1\n}"),
+            Example("""
+            func foo() {
+                bar {
+                    let x: Int = 1
+                }
+            }
+            """)
+        ]
+        let triggeringExamples = [
+            Example("func foo() {\n↓let intVal = 1\n}"),
+            Example("""
+            func foo() {
+                bar {
+                    ↓let x = 1
+                }
+            }
+            """)
+        ]
+        let description = ExplicitTypeInterfaceRule.description
+            .with(triggeringExamples: triggeringExamples)
+            .with(nonTriggeringExamples: nonTriggeringExamples)
+
+        verifyRule(description)
     }
 
     func testExcludeLocalVars() {
@@ -66,7 +90,7 @@ class ExplicitTypeInterfaceRuleTests: XCTestCase {
         verifyRule(description, ruleConfiguration: ["allow_redundancy": true])
     }
 
-    func testEmbededInStatements() {
+    func testEmbeddedInStatements() {
         let nonTriggeringExamples = [
             Example("""
             func foo() {
@@ -151,21 +175,19 @@ class ExplicitTypeInterfaceRuleTests: XCTestCase {
 
     // swiftlint:disable function_body_length
     func testSwitchCaseDeclarations() {
-        guard SwiftVersion.current >= .fourDotOne else {
-            return
-        }
-
         let nonTriggeringExamples = [
             Example("""
             enum Foo {
                 case failure(Any)
                 case success(Any)
-                }
-                func bar() {
-                    let foo: Foo = .success(1)
-                    switch foo {
-                    case .failure(let error): let bar: Int = 1
-                    case .success(let result): let bar: Int = 2
+            }
+            func bar() {
+                let foo: Foo = .success(1)
+                switch foo {
+                case .failure(let error):
+                    let bar: Int = 1
+                case .success(let result):
+                    let bar: Int = 2
                 }
             }
             """),

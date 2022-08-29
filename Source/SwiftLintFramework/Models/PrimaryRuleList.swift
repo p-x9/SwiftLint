@@ -1,7 +1,9 @@
-// Generated using Sourcery 1.2.1 — https://github.com/krzysztofzablocki/Sourcery
+// Generated using Sourcery 1.8.2 — https://github.com/krzysztofzablocki/Sourcery
 // DO NOT EDIT
 /// The rule list containing all available rules built into SwiftLint.
 public let primaryRuleList = RuleList(rules: [
+    AccessibilityLabelForImageRule.self,
+    AnonymousArgumentInMultilineClosureRule.self,
     AnyObjectProtocolRule.self,
     ArrayInitRule.self,
     AttributesRule.self,
@@ -16,6 +18,7 @@ public let primaryRuleList = RuleList(rules: [
     ClosureSpacingRule.self,
     CollectionAlignmentRule.self,
     ColonRule.self,
+    CommaInheritanceRule.self,
     CommaRule.self,
     CommentSpacingRule.self,
     CompilerProtocolInitRule.self,
@@ -33,7 +36,7 @@ public let primaryRuleList = RuleList(rules: [
     DiscardedNotificationCenterObserverRule.self,
     DiscouragedAssertRule.self,
     DiscouragedDirectInitRule.self,
-    DiscouragedNoneName.self,
+    DiscouragedNoneNameRule.self,
     DiscouragedObjectLiteralRule.self,
     DiscouragedOptionalBooleanRule.self,
     DiscouragedOptionalCollectionRule.self,
@@ -131,6 +134,7 @@ public let primaryRuleList = RuleList(rules: [
     OverrideInExtensionRule.self,
     PatternMatchingKeywordsRule.self,
     PreferNimbleRule.self,
+    PreferSelfInStaticReferencesRule.self,
     PreferSelfTypeOverTypeOfSelfRule.self,
     PreferZeroOverExplicitInitRule.self,
     PrefixedTopLevelConstantRule.self,
@@ -159,6 +163,8 @@ public let primaryRuleList = RuleList(rules: [
     RequiredDeinitRule.self,
     RequiredEnumCaseRule.self,
     ReturnArrowWhitespaceRule.self,
+    ReturnValueFromVoidFunctionRule.self,
+    SelfInPropertyInitializationRule.self,
     ShorthandOperatorRule.self,
     SingleTestClassRule.self,
     SortedFirstLastRule.self,
@@ -182,6 +188,8 @@ public let primaryRuleList = RuleList(rules: [
     TypeBodyLengthRule.self,
     TypeContentsOrderRule.self,
     TypeNameRule.self,
+    TypesafeArrayInitRule.self,
+    UnavailableConditionRule.self,
     UnavailableFunctionRule.self,
     UnneededBreakInSwitchRule.self,
     UnneededParenthesesInClosureArgumentRule.self,
@@ -202,9 +210,10 @@ public let primaryRuleList = RuleList(rules: [
     VerticalWhitespaceClosingBracesRule.self,
     VerticalWhitespaceOpeningBracesRule.self,
     VerticalWhitespaceRule.self,
+    VoidFunctionInTernaryConditionRule.self,
     VoidReturnRule.self,
     WeakDelegateRule.self,
     XCTFailMessageRule.self,
     XCTSpecificMatcherRule.self,
     YodaConditionRule.self
-])
+] + extraRules())

@@ -11,10 +11,6 @@ private func funcWithParameters(_ parameters: String,
 }
 
 class FunctionParameterCountRuleTests: XCTestCase {
-    func testWithDefaultConfiguration() {
-        verifyRule(FunctionParameterCountRule.description)
-    }
-
     func testFunctionParameterCount() {
         let baseDescription = FunctionParameterCountRule.description
         let nonTriggeringExamples = [

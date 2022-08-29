@@ -4,11 +4,6 @@ import XCTest
 class VerticalWhitespaceRuleTests: XCTestCase {
     private let ruleID = VerticalWhitespaceRule.description.identifier
 
-    func testVerticalWhitespaceWithDefaultConfiguration() {
-        // Test with default parameters
-        verifyRule(VerticalWhitespaceRule.description)
-    }
-
     func testAttributesWithMaxEmptyLines() {
         // Test with custom `max_empty_lines`
         let maxEmptyLinesDescription = VerticalWhitespaceRule.description

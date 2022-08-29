@@ -77,9 +77,9 @@ public struct RequiredEnumCaseRule: ASTRule, OptInRule, ConfigurationProviderRul
         let cases: [String]
 
         init(from dictionary: SourceKittenDictionary, in file: SwiftLintFile) {
-            location = Enum.location(from: dictionary, in: file)
+            location = Self.location(from: dictionary, in: file)
             inheritedTypes = dictionary.inheritedTypes
-            cases = Enum.cases(from: dictionary)
+            cases = Self.cases(from: dictionary)
         }
 
         /// Determines the location of where the enum declaration starts.
@@ -102,8 +102,7 @@ public struct RequiredEnumCaseRule: ASTRule, OptInRule, ConfigurationProviderRul
             }.flatMap { $0.substructure }
 
             return caseSubstructures.compactMap { $0.name }.map { name in
-                if SwiftVersion.current > .fourDotOne,
-                    let parenIndex = name.firstIndex(of: "("),
+                if let parenIndex = name.firstIndex(of: "("),
                     parenIndex > name.startIndex {
                     let index = name.index(before: parenIndex)
                     return String(name[...index])
@@ -118,6 +117,10 @@ public struct RequiredEnumCaseRule: ASTRule, OptInRule, ConfigurationProviderRul
 
     public init() {}
 
+    private static let exampleConfiguration = [
+        "NetworkResponsable": ["success": "warning", "error": "warning", "notConnected": "warning"]
+    ]
+
     public static let description = RuleDescription(
         identifier: "required_enum_case",
         name: "Required Enum Case",
@@ -128,50 +131,50 @@ public struct RequiredEnumCaseRule: ASTRule, OptInRule, ConfigurationProviderRul
             enum MyNetworkResponse: String, NetworkResponsable {
                 case success, error, notConnected
             }
-            """),
+            """, configuration: exampleConfiguration),
             Example("""
             enum MyNetworkResponse: String, NetworkResponsable {
                 case success, error, notConnected(error: Error)
             }
-            """),
+            """, configuration: exampleConfiguration),
             Example("""
             enum MyNetworkResponse: String, NetworkResponsable {
                 case success
                 case error
                 case notConnected
             }
-            """),
+            """, configuration: exampleConfiguration),
             Example("""
             enum MyNetworkResponse: String, NetworkResponsable {
                 case success
                 case error
                 case notConnected(error: Error)
             }
-            """)
+            """, configuration: exampleConfiguration)
         ],
         triggeringExamples: [
             Example("""
-            enum MyNetworkResponse: String, NetworkResponsable {
+            ↓enum MyNetworkResponse: String, NetworkResponsable {
                 case success, error
             }
-            """),
+            """, configuration: exampleConfiguration),
             Example("""
-            enum MyNetworkResponse: String, NetworkResponsable {
+            ↓enum MyNetworkResponse: String, NetworkResponsable {
                 case success, error
             }
-            """),
+            """, configuration: exampleConfiguration),
             Example("""
-            enum MyNetworkResponse: String, NetworkResponsable {
+            ↓enum MyNetworkResponse: String, NetworkResponsable {
                 case success
                 case error
             }
-            """),
+            """, configuration: exampleConfiguration),
             Example("""
-            enum MyNetworkResponse: String, NetworkResponsable {
+            ↓enum MyNetworkResponse: String, NetworkResponsable {
                 case success
                 case error
             }
-            """)
+            """, configuration: exampleConfiguration)
         ]
     )
 

@@ -2,11 +2,6 @@
 import XCTest
 
 class ComputedAccessorsOrderRuleTests: XCTestCase {
-    func testWithDefaultConfiguration() {
-        // Test with default parameters
-        verifyRule(ComputedAccessorsOrderRule.description)
-    }
-
     func testSetGetConfiguration() {
         let nonTriggeringExamples = [
             Example("""

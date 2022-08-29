@@ -1,8 +1,7 @@
 import Foundation
 import SourceKittenFramework
 
-public struct AnyObjectProtocolRule: SubstitutionCorrectableASTRule, OptInRule,
-                                     ConfigurationProviderRule, AutomaticTestableRule {
+public struct AnyObjectProtocolRule: SubstitutionCorrectableASTRule, OptInRule, ConfigurationProviderRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -12,7 +11,6 @@ public struct AnyObjectProtocolRule: SubstitutionCorrectableASTRule, OptInRule,
         name: "AnyObject Protocol",
         description: "Prefer using `AnyObject` over `class` for class-only protocols.",
         kind: .lint,
-        minSwiftVersion: .fourDotOne,
         nonTriggeringExamples: [
             Example("protocol SomeProtocol {}\n"),
             Example("protocol SomeClassOnlyProtocol: AnyObject {}\n"),

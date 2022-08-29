@@ -1,6 +1,6 @@
 import SourceKittenFramework
 
-public struct ForWhereRule: ASTRule, ConfigurationProviderRule, AutomaticTestableRule {
+public struct ForWhereRule: ASTRule, ConfigurationProviderRule {
     public var configuration = SeverityConfiguration(.warning)
 
     public init() {}
@@ -80,6 +80,14 @@ public struct ForWhereRule: ASTRule, ConfigurationProviderRule, AutomaticTestabl
             for user in users {
               ↓if user.id == 1 { return true }
             }
+            """),
+            Example("""
+            for subview in subviews {
+                ↓if !(subview is UIStackView) {
+                    subview.removeConstraints(subview.constraints)
+                    subview.removeFromSuperview()
+                }
+            }
             """)
         ]
     )
@@ -115,11 +123,9 @@ public struct ForWhereRule: ASTRule, ConfigurationProviderRule, AutomaticTestabl
 
     private func isOnlyOneIf(dictionary: SourceKittenDictionary) -> Bool {
         let substructure = dictionary.substructure
-        guard substructure.count == 1 else {
-            return false
-        }
-
-        return dictionary.substructure.first?.statementKind == .brace
+        let onlyOneBlock = substructure.filter { $0.statementKind == .brace }.count == 1
+        let noOtherIf = substructure.allSatisfy { $0.statementKind != .if }
+        return onlyOneBlock && noOtherIf
     }
 
     private func isOnlyIfInsideFor(forDictionary: SourceKittenDictionary,
@@ -139,7 +145,7 @@ public struct ForWhereRule: ASTRule, ConfigurationProviderRule, AutomaticTestabl
             file.syntaxMap.kinds(inByteRange: afterIfRange)
 
         let doesntContainComments = !allKinds.contains { kind in
-            !ForWhereRule.commentKinds.contains(kind)
+            !Self.commentKinds.contains(kind)
         }
 
         return doesntContainComments

@@ -56,6 +56,11 @@ struct UnusedImportRuleExamples {
         ↓import Foundation
         import UnknownModule
         func foo(error: Swift.Error) {}
+        """),
+        Example("""
+        ↓import Swift
+        ↓import SwiftShims
+        func foo(error: Swift.Error) {}
         """)
     ]
 
@@ -147,19 +152,19 @@ struct UnusedImportRuleExamples {
             """),
         Example("""
         ↓↓import Foundation
-        typealias Foo = CGPoint
+        typealias Foo = CFArray
         """, configuration: [
             "require_explicit_imports": true,
             "allowed_transitive_imports": [
                 [
                     "module": "Foundation",
-                    "allowed_transitive_imports": ["CoreGraphics"]
+                    "allowed_transitive_imports": ["CoreFoundation"]
                 ]
             ]
         ], testMultiByteOffsets: false, testOnLinux: false):
             Example("""
-            import CoreGraphics
-            typealias Foo = CGPoint
+            import CoreFoundation
+            typealias Foo = CFArray
             """),
         Example("""
         ↓↓import Foundation
@@ -215,6 +220,14 @@ struct UnusedImportRuleExamples {
             Example("""
             import Foundation
             func bar() {}
+            """),
+        Example("""
+        ↓import Swift
+        ↓import SwiftShims
+        func foo(error: Swift.Error) {}
+        """):
+            Example("""
+            func foo(error: Swift.Error) {}
             """)
     ]
 }

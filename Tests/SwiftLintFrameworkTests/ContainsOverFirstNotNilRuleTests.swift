@@ -2,12 +2,6 @@ import SwiftLintFramework
 import XCTest
 
 class ContainsOverFirstNotNilRuleTests: XCTestCase {
-    func testWithDefaultConfiguration() {
-        verifyRule(ContainsOverFirstNotNilRule.description)
-    }
-
-    // MARK: - Reasons
-
     func testFirstReason() {
         let example = Example("↓myList.first { $0 % 2 == 0 } != nil")
         let violations = self.violations(example)
